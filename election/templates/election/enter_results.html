@@ -1,0 +1,16 @@
+{% extends 'election/base.html' %}{% block title %}Enter Polling Unit Results{% endblock %}
+{% block content %}<section class="card"><h2>Enter results for a polling unit</h2><p class="muted">Select the LGA, ward and polling unit. This form records results only for a polling unit that does not already have result rows, to avoid accidental duplicate submissions.</p>
+<form method="get" id="location-form"><label for="lga">Local Government Area</label><select id="lga" name="lga" required><option value="">Choose an LGA</option>{% for lga in lgas %}<option value="{{ lga.lga_id }}" {% if selected_lga|stringformat:'s' == lga.lga_id|stringformat:'s' %}selected{% endif %}>{{ lga.lga_name }}</option>{% endfor %}</select><label for="ward">Ward</label><select id="ward" name="ward" required><option value="">Choose a ward</option>{% for ward in wards %}<option value="{{ ward.uniqueid }}" {% if selected_ward|stringformat:'s' == ward.uniqueid|stringformat:'s' %}selected{% endif %}>{{ ward.ward_name }}</option>{% endfor %}</select><label for="polling_unit">Polling unit</label><select id="polling_unit" name="polling_unit" required><option value="">Choose a polling unit</option>{% for unit in units %}<option value="{{ unit.uniqueid }}" {% if selected_unit|stringformat:'s' == unit.uniqueid|stringformat:'s' %}selected{% endif %}>{{ unit.polling_unit_name|default:'Unnamed polling unit' }} — {{ unit.polling_unit_number|default:unit.uniqueid }} (ID {{ unit.uniqueid }})</option>{% endfor %}</select><button type="submit">Load selection</button></form>
+{% if selected_unit and selected_ward and selected_lga %}<hr><form method="post">{% csrf_token %}<input type="hidden" name="lga" value="{{ selected_lga }}"><input type="hidden" name="ward" value="{{ selected_ward }}"><input type="hidden" name="polling_unit" value="{{ selected_unit }}"><label for="entered_by_user">Entered by</label><input id="entered_by_user" name="entered_by_user" maxlength="50" value="Web User"><h3>Votes by party</h3><p class="muted">Enter zero where a party received no votes. All parties in the supplied party table are included.</p><div class="grid">{% for party in parties %}<div><label for="score_{{ party.partyid }}">{{ party.partyid }} votes</label><input id="score_{{ party.partyid }}" name="score_{{ party.partyid }}" type="number" min="0" step="1" value="0" required></div>{% endfor %}</div><button type="submit">Save all party results</button></form>{% endif %}
+</section>
+<script>
+// Chained selectors: changing the LGA resets the ward and polling unit;
+// changing the ward reloads the available units for that LGA/ward.
+const form = document.getElementById('location-form');
+const lga = document.getElementById('lga');
+const ward = document.getElementById('ward');
+const unit = document.getElementById('polling_unit');
+lga.addEventListener('change', () => { ward.value = ''; unit.value = ''; form.submit(); });
+ward.addEventListener('change', () => { unit.value = ''; form.submit(); });
+unit.addEventListener('change', () => form.submit());
+</script>{% endblock %}
